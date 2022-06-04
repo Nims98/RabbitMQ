@@ -8,17 +8,9 @@ wavenet_test(Val) ->
     %% Open a channel on the connection
     {ok, Channel} = amqp_connection:open_channel(Connection),
 
-    %% Declare a queue
-
-    % #'queue.declare_ok'{queue = Q} =
-    %     amqp_channel:call(Channel, #'queue.declare'{}),
-
-    Declare = #'queue.declare'{queue = <<"my_queue">>},
-    #'queue.declare_ok'{} = amqp_channel:call(Channel, Declare),
-
     %% Publish a message
-    Payload = <<Val>>,
-    Publish = #'basic.publish'{exchange = <<>>, routing_key = <<"my_queue">>},
+    Payload = list_to_binary(Val),
+    Publish = #'basic.publish'{exchange = <<"my_exchange">>},
     amqp_channel:cast(Channel, Publish, #amqp_msg{payload = Payload}),
 
     %% Close the channel
