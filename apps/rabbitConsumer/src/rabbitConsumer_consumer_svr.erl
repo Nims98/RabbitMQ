@@ -19,10 +19,13 @@ init(_Args) ->
 
     %% Declare queues
     Queues = [queue_1, queue_2, queue_3, queue_4, queue_5],
-    declare_queues(Queues, State),
+    %% Declare exchange
 
-    #'basic.consume_ok'{consumer_tag = Tag} =
-        amqp_channel:call(Channel, #'basic.consume'{queue = <<"my_queue">>}),
+    #'exchange.declare_ok'{} = amqp_channel:call(State#state.channel, #'exchange.declare'{
+        exchange = <<"my_exchange">>,
+        type = <<"fanout">>
+    }),
+    declare_queues(Queues, State),
 
     loop(Channel),
     {ok, State}.
@@ -56,12 +59,6 @@ declare_queues([Queue | T], State) ->
     #'queue.declare_ok'{} = amqp_channel:call(State#state.channel, Declare),
     #'basic.consume_ok'{consumer_tag = Tag} =
         amqp_channel:call(State#state.channel, #'basic.consume'{queue = atom_to_binary(Queue)}),
-
-    %% Declare exchange
-    #'exchange.declare_ok'{} = amqp_channel:call(State#state.channel, #'exchange.declare'{
-        exchange = <<"my_exchange">>,
-        type = <<"fanout">>
-    }),
 
     %% Binding
     #'queue.bind_ok'{} = amqp_channel:call(State#state.channel, #'queue.bind'{
